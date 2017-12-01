@@ -91,8 +91,7 @@ class Model:
             for i in range(min(prev_units, num_units)):
                 result[mapsize//2, mapsize//2, i, i] += 1.0
         # else leaving all parameters near zero is the right thing to do
-        with tf.device('/device:GPU:0'):
-            result = tf.constant(result.astype(np.float32))
+        result = tf.constant(result.astype(np.float32))
 
         return result
 
@@ -154,8 +153,7 @@ class Model:
         weight  = self._get_variable('weight', initw)
 
         # Bias term
-        with tf.device('/device:GPU:0'):
-            initb   = tf.constant(0.0, shape=[num_units])
+        initb   = tf.constant(0.0, shape=[num_units])
         bias    = self._get_variable('bias', initb)
 
         # Output of this layer
@@ -236,8 +234,7 @@ class Model:
                               padding='SAME')
 
         # Bias term
-        with tf.device('/device:GPU:0'):
-            initb  = tf.constant(0.0, shape=[num_units])
+        initb  = tf.constant(0.0, shape=[num_units])
         bias   = self._get_variable('bias', initb)
         out    = tf.nn.bias_add(out, bias)
             
@@ -268,8 +265,7 @@ class Model:
                                         padding='SAME')
 
         # Bias term
-        with tf.device('/device:GPU:0'):
-            initb  = tf.constant(0.0, shape=[num_units])    
+        initb  = tf.constant(0.0, shape=[num_units])    
         bias   = self._get_variable('bias', initb)
         out    = tf.nn.bias_add(out, bias)
             
