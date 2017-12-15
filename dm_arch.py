@@ -91,7 +91,6 @@ class Model:
             for i in range(min(prev_units, num_units)):
                 result[mapsize//2, mapsize//2, i, i] += 1.0
         # else leaving all parameters near zero is the right thing to do
-
         result = tf.constant(result.astype(np.float32))
 
         return result
@@ -266,7 +265,7 @@ class Model:
                                         padding='SAME')
 
         # Bias term
-        initb  = tf.constant(0.0, shape=[num_units])
+        initb  = tf.constant(0.0, shape=[num_units])    
         bias   = self._get_variable('bias', initb)
         out    = tf.nn.bias_add(out, bias)
             

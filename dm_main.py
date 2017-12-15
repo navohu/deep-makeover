@@ -26,6 +26,7 @@ FLAGS = tf.app.flags.FLAGS
 def _setup_tensorflow():
     # Create session
     config = tf.ConfigProto(log_device_placement=True) #, intra_op_parallelism_threads=1)
+    config.gpu_options.allow_growth = True
     sess   = tf.Session(config=config)
 
     # Initialize all RNGs with a deterministic seed
