@@ -17,6 +17,9 @@ def define_flags():
     tf.app.flags.DEFINE_string('checkpoint_dir', 'checkpoint',
                                "Output folder where checkpoints are dumped.")
 
+    tf.app.flags.DEFINE_string('checkpoint_period', 30,
+                               "Save checkpoint every x minutes")
+
     tf.app.flags.DEFINE_string('dataset', 'dataset',
                                "Path to the dataset directory.")
 
@@ -68,5 +71,5 @@ def define_flags():
     tf.app.flags.DEFINE_string('train_mode', 'mtf',
                                "Training mode. Can be male-to-female (`mtf`), female-to-male (`ftm`), male-to-male (`mtm`) or female-to-female (`ftf`)")
 
-    tf.app.flags.DEFINE_integer('train_time', 2,
+    tf.app.flags.DEFINE_integer('train_time', 180,
                                 "Time in minutes to train the model")

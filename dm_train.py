@@ -129,8 +129,8 @@ def train_model(train_data):
             td.sess.run(td.halve_annealing)
 
         # Save checkpoint
-        #if step % FLAGS.checkpoint_period == 0:
-        #    _save_checkpoint(td, step)
+        if elapsed % FLAGS.checkpoint_period == 0:
+           _save_checkpoint(td, step)
 
-    _save_checkpoint(td, step)
+    # _save_checkpoint(td, step)
     print('Finished training!')
