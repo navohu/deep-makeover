@@ -17,7 +17,7 @@ def define_flags():
     tf.app.flags.DEFINE_string('checkpoint_dir', 'checkpoint',
                                "Output folder where checkpoints are dumped.")
 
-    tf.app.flags.DEFINE_string('checkpoint_period', 30,
+    tf.app.flags.DEFINE_string('checkpoint_period', 10,
                                "Save checkpoint every x minutes")
 
     tf.app.flags.DEFINE_string('dataset', 'dataset',
