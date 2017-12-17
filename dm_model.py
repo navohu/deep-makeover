@@ -176,7 +176,7 @@ def create_model(sess, source_images, target_images=None, annealing=None, verbos
         
         disc_loss, disc_real_loss, disc_fake_loss = _discriminator_loss(disc_real_out, disc_fake_out)
 
-        gene_opti = tf.train.AdamOptimizer(learning_rate=learning_rate,
+        gene_opti = tf.contrib.opt.NadamOptimizer(learning_rate=learning_rate,
                                            name='gene_optimizer')
 
         # Note WGAN doesn't work well with Adam or any other optimizer that relies on momentum
