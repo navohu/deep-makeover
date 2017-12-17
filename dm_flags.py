@@ -5,7 +5,7 @@ FLAGS = tf.app.flags.FLAGS
 
 def define_flags():
     # Configuration (alphabetically)
-    tf.app.flags.DEFINE_integer('annealing_half_life', 10000,
+    tf.app.flags.DEFINE_integer('annealing_half_life', 1000,
                                 "Number of batches until annealing temperature is halved")
 
     tf.app.flags.DEFINE_string('attribute_file', 'list_attr_celeba.txt',
