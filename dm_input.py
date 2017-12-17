@@ -33,6 +33,7 @@ def input_data(sess, mode, filenames, capacity_factor=3):
     # Crop and other random augmentations
     if mode == 'train':
         image = tf.image.random_flip_left_right(image)
+        image = tf.contrib.image.rotate(image, 10, interpolation='NEAREST')
         #image = tf.image.random_saturation(image, .95, 1.05)
         #image = tf.image.random_brightness(image, .05)
         #image = tf.image.random_contrast(image, .95, 1.05)
