@@ -85,8 +85,8 @@ def make_log_dir():
 
         new_number=max(file_nums)+1 #find largest and increment
 
-    filename = '/log_%06d.csv' % (new_number)
-    with open(FLAGS.logs + filename, "w") as empty_csv:
+    filename = os.path.join(FLAGS.logs, '/log_%06d.csv' % (new_number))
+    with open(filename, "w") as empty_csv:
         writer = csv.writer(f)
         writer.writerow(['Step', 'Generator', 'Discriminator', 'Real', 'Fake'])
 
