@@ -90,7 +90,7 @@ def make_log_dir():
         writer = csv.writer(empty_csv)
         writer.writerow(['Step', 'Generator', 'Discriminator', 'Real', 'Fake'])
 
-    return FLAGS.logs + filename
+    return filename
 
 def save_values_to_csv(log_values, filename):
     with open(filename, 'a') as file:
