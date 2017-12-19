@@ -85,16 +85,16 @@ def make_log_dir():
 
         new_number=max(file_nums)+1 #find largest and increment
 
-    filename = os.path.join(FLAGS.logs, '/log_%06d.csv' % (new_number))
+    filename = os.path.join(FLAGS.logs, 'log_%06d.csv' % (new_number))
     with open(filename, "w") as empty_csv:
-        writer = csv.writer(f)
+        writer = csv.writer(empty_csv)
         writer.writerow(['Step', 'Generator', 'Discriminator', 'Real', 'Fake'])
 
     return FLAGS.logs + filename
 
 def save_values_to_csv(log_values, filename):
     with open(filename, 'a') as file:
-        writer = csv.writer(f)
+        writer = csv.writer(file)
         writer.writerow(log_values)
 
 
