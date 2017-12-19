@@ -1,7 +1,11 @@
+import csv
 import numpy as np
 import os.path
 import tensorflow as tf
 import time
+
+import glob
+import re
 
 import dm_arch
 import dm_input
@@ -68,6 +72,33 @@ def _save_checkpoint(train_data, batch):
 
     print("    Checkpoint saved")
 
+def make_log_dir():
+    """Create directories of logs for each time we run the model to track the performance"""
+    files=glob.glob(FLAGS.logs + "/log_*.csv")
+    file_nums=[]
+    if len(files) is 0:
+        new_number = 0
+    else:
+        for i, s in enumerate(files):
+            num_str = re.search("(\d+).csv$",  files[i]) #capture only integer before ".csv" and EOL
+            file_nums.append(parseInt(num_str.group(1)))  #convert to number
+
+        new_number=max(file_nums)+1 #find largest and increment
+
+    filename = '/log_%06d.csv' % (new_number)
+    with open(FLAGS.logs + filename, "a") as empty_csv:
+        writer = csv.writer(f)
+        writer.writerow(['Step', 'Generator', 'Discriminator', 'Real', 'Fake'])
+
+    return FLAGS.logs + filename
+
+def save_values_to_csv(log_values, filename):
+    with open(filename, 'a') as file:
+        writer = csv.writer(f)
+        writer.writerow(log_values)
+
+
+
 
 def train_model(train_data):
     """Trains the given model with the given dataset"""
@@ -87,6 +118,8 @@ def train_model(train_data):
     done       = False
     gene_decor = " "
 
+    log_name = make_log_dir()
+
     print('\nModel training...')
     step = 0
     while not done:
@@ -101,6 +134,10 @@ def train_model(train_data):
         print('  Progress[%3d%%], ETA[%4dm], Step [%5d], temp[%3.3f], %sgene[%-3.3f], *disc[%-3.3f] real[%-3.3f] fake[%-3.3f]' %
               (int(100*elapsed/FLAGS.train_time), FLAGS.train_time - elapsed, step,
                annealing, gene_decor, gene_loss, disc_loss, disc_real_loss, disc_fake_loss))
+
+        log_values = [step, gene_loss, disc_loss, disc_real_loss, disc_fake_loss]
+        save_values_to_csv(log_values, log_name)
+
 
         # Tight loop to maximize GPU utilization
         # TBD: Is there any way to make Tensorflow repeat multiple times an operation with a single sess.run call?
@@ -119,6 +156,10 @@ def train_model(train_data):
                 td.sess.run(tda.disc_minimize)
         step += 1
 
+        # Save checkpoint
+        if step % FLAGS.checkpoint_period == 0:
+           _save_checkpoint(td, step)
+
         # Finished?
         current_progress = elapsed / FLAGS.train_time
         if current_progress >= 1.0:
@@ -128,9 +169,6 @@ def train_model(train_data):
         if step % FLAGS.annealing_half_life == 0:
             td.sess.run(td.halve_annealing)
 
-        # Save checkpoint
-        if elapsed*100+1 % FLAGS.checkpoint_period == 0:
-           _save_checkpoint(td, step)
 
-    # _save_checkpoint(td, step)
+    _save_checkpoint(td, step)
     print('Finished training!')

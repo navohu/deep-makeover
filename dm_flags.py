@@ -5,7 +5,7 @@ FLAGS = tf.app.flags.FLAGS
 
 def define_flags():
     # Configuration (alphabetically)
-    tf.app.flags.DEFINE_integer('annealing_half_life', 1000,
+    tf.app.flags.DEFINE_integer('annealing_half_life', 300,
                                 "Number of batches until annealing temperature is halved")
 
     tf.app.flags.DEFINE_string('attribute_file', 'list_attr_celeba.txt',
@@ -43,6 +43,9 @@ def define_flags():
 
     tf.app.flags.DEFINE_float('learning_rate_end',   0.000001,
                               "Ending learning rate used for AdamOptimizer")
+
+    tf.app.flags.DEFINE_string('logs', 'logs', 
+                               "Stores CSVs of loss each time we run for plotting and tracking")
 
     tf.app.flags.DEFINE_string('outfile', 'inference_out.png',
                                "Inference output file. See also `infile`")
