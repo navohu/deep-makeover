@@ -81,7 +81,7 @@ def make_log_dir():
     else:
         for i, s in enumerate(files):
             num_str = re.search("(\d+).csv$",  files[i]) #capture only integer before ".csv" and EOL
-            file_nums.append(parseInt(num_str.group(1)))  #convert to number
+            file_nums.append(int(num_str.group(1)))  #convert to number
 
         new_number=max(file_nums)+1 #find largest and increment
 
