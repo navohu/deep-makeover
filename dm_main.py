@@ -105,10 +105,10 @@ def _get_train_data():
     halve_annealing = tf.assign(annealing, 0.5*annealing)
 
     # Create and initialize training and testing models
-    train_model  = dm_model.create_model(sess, source_images, target_images, annealing, verbose=True)
+    train_model  = dm_model.create_model(sess, source_images, target_images, annealing, verbose=True, imp_wgan=True)
 
     print("Building testing model...")
-    test_model   = dm_model.create_model(sess, test_images, None, annealing)
+    test_model   = dm_model.create_model(sess, test_images, None, annealing, imp_wgan=True)
     print("Done.")
     
     # Forget this line and TF will deadlock at the beginning of training

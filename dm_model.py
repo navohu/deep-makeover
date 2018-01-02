@@ -123,7 +123,7 @@ def _clip_weights(var_list, weights_threshold):
     return tf.group(*ops, name='clip_weights')
 
 
-def create_model(sess, source_images, target_images=None, annealing=None, verbose=False):    
+def create_model(sess, source_images, target_images=None, annealing=None, verbose=False, imp_wgan=False):    
     rows  = int(source_images.get_shape()[1])
     cols  = int(source_images.get_shape()[2])
     depth = int(source_images.get_shape()[3])
@@ -143,53 +143,90 @@ def create_model(sess, source_images, target_images=None, annealing=None, verbos
         print()
 
     if target_images is not None:
-        learning_rate = tf.maximum(FLAGS.learning_rate_start * annealing, FLAGS.learning_rate_end, name='learning_rate')
+        if not imp_wgan:
+            learning_rate = tf.maximum(FLAGS.learning_rate_start * annealing, FLAGS.learning_rate_end, name='learning_rate')
 
-        # Instance noise used to aid convergence.
-        # See http://www.inference.vc/instance-noise-a-trick-for-stabilising-gan-training/
-        noise_shape = [FLAGS.batch_size, rows, cols, depth]
-        noise = tf.truncated_normal(noise_shape, mean=0.0, stddev=FLAGS.instance_noise*annealing, name='instance_noise')
-        noise = tf.reshape(noise, noise_shape) # TBD: Why is this even necessary? I don't get it.
-        noise = 0.0
+            # Instance noise used to aid convergence.
+            # See http://www.inference.vc/instance-noise-a-trick-for-stabilising-gan-training/
+            noise_shape = [FLAGS.batch_size, rows, cols, depth]
+            noise = tf.truncated_normal(noise_shape, mean=0.0, stddev=FLAGS.instance_noise*annealing, name='instance_noise')
+            noise = tf.reshape(noise, noise_shape) # TBD: Why is this even necessary? I don't get it.
+            noise = 0.0
 
-        #
-        # Discriminator: one takes real inputs, another takes fake (generated) inputs
-        #
-        disc_real     = _discriminator_model(sess, target_images + noise)
-        disc_real_out = disc_real.get_output()
-        disc_var_list = disc_real.get_all_variables()
+            #
+            # Discriminator: one takes real inputs, another takes fake (generated) inputs
+            #
+            disc_real     = _discriminator_model(sess, target_images + noise)
+            disc_real_out = disc_real.get_output()
+            disc_var_list = disc_real.get_all_variables()
 
-        disc_fake     = _discriminator_model(sess, gene_out + noise)
-        disc_fake_out = disc_fake.get_output()
-    
-        if verbose:
-            print("Discriminator input (feature) size is %d x %d x %d = %d" %
-                  (rows, cols, depth, rows*cols*depth))
-
-            print("Discriminator has %4.2fM parameters" % (disc_real.get_num_parameters()/1e6,))
-            print()
-
-        #
-        # Losses and optimizers
-        #
-        gene_loss = _generator_loss(source_images, gene_out, disc_fake_out, annealing)
+            disc_fake     = _discriminator_model(sess, gene_out + noise)
+            disc_fake_out = disc_fake.get_output()
         
-        disc_loss, disc_real_loss, disc_fake_loss = _discriminator_loss(disc_real_out, disc_fake_out)
+            if verbose:
+                print("Discriminator input (feature) size is %d x %d x %d = %d" %
+                      (rows, cols, depth, rows*cols*depth))
 
-        gene_opti = tf.contrib.opt.NadamOptimizer(learning_rate=learning_rate,
-                                           name='gene_optimizer')
+                print("Discriminator has %4.2fM parameters" % (disc_real.get_num_parameters()/1e6,))
+                print()
 
-        # Note WGAN doesn't work well with Adam or any other optimizer that relies on momentum
-        disc_opti = tf.train.RMSPropOptimizer(learning_rate=learning_rate, momentum=0.0,
-                                              name='disc_optimizer')
+            #
+            # Losses and optimizers
+            #
+            gene_loss = _generator_loss(source_images, gene_out, disc_fake_out, annealing)
+            
+            disc_loss, disc_real_loss, disc_fake_loss = _discriminator_loss(disc_real_out, disc_fake_out)
 
-        gene_minimize = gene_opti.minimize(gene_loss, var_list=gene_var_list, name='gene_loss_minimize')    
-        disc_minimize = disc_opti.minimize(disc_loss, var_list=disc_var_list, name='disc_loss_minimize')
+            gene_opti = tf.contrib.opt.NadamOptimizer(learning_rate=learning_rate,
+                                               name='gene_optimizer')
 
-        # Weight clipping a la WGAN (arXiv 1701.07875)
-        # TBD: We shouldn't be clipping all variables (incl biases), just the weights
-        disc_clip_weights = _clip_weights(disc_var_list, FLAGS.disc_weights_threshold)
-        disc_minimize     = tf.group(disc_minimize, disc_clip_weights)
+            # Note WGAN doesn't work well with Adam or any other optimizer that relies on momentum
+            disc_opti = tf.train.RMSPropOptimizer(learning_rate=learning_rate, momentum=0.0,
+                                                  name='disc_optimizer')
+
+            gene_minimize = gene_opti.minimize(gene_loss, var_list=gene_var_list, name='gene_loss_minimize')    
+            disc_minimize = disc_opti.minimize(disc_loss, var_list=disc_var_list, name='disc_loss_minimize')
+
+            # Weight clipping a la WGAN (arXiv 1701.07875)
+            # TBD: We shouldn't be clipping all variables (incl biases), just the weights
+            disc_clip_weights = _clip_weights(disc_var_list, FLAGS.disc_weights_threshold)
+            disc_minimize     = tf.group(disc_minimize, disc_clip_weights)
+
+        if imp_wgan:
+            # fake_data = Generator(BATCH_SIZE)
+            real_data = tf.placeholder(tf.float32, shape=[FLAGS.batch_size, OUTPUT_DIM])
+            fake_data_gen = _generator_model(sess, source_images)
+            fake_data = gene.get_output()
+
+            gen_loss = -tf.reduce_mean(disc_fake)
+            disc_loss = tf.reduce_mean(disc_fake) - tf.reduce_mean(disc_real)
+            alpha = tf.random_uniform(
+                shape=[FLAGS.batch_size,1], 
+                minval=0.,
+                maxval=1.
+            )
+            differences = fake_data - real_data
+            interpolates = real_data + (alpha*differences)
+            gradients = tf.gradients(Discriminator(interpolates), [interpolates])[0]
+
+
+            gradients = tf.gradients(_discriminator_model(sess, target_images + noise), [interpolates])[0]
+            slopes = tf.sqrt(tf.reduce_sum(tf.square(gradients), reduction_indices=[1]))
+            gradient_penalty = tf.reduce_mean((slopes-1.)**2)
+            disc_loss += FLAGS.lambd*gradient_penalty
+
+            gen_train_op = tf.train.AdamOptimizer(
+                learning_rate=learning_rate, 
+                beta1=0.5,
+                beta2=0.9
+            ).minimize(gene_loss, var_list=gene_var_list)
+            disc_train_op = tf.train.AdamOptimizer(
+                learning_rate=learning_rate, 
+                beta1=0.5, 
+                beta2=0.9
+            ).minimize(disc_loss, var_list=disc_var_list)
+
+            clip_disc_weights = None
 
     # Package everything into an dumb object
     model = dm_utils.Container(locals())

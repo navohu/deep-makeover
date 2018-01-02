@@ -38,6 +38,9 @@ def define_flags():
     tf.app.flags.DEFINE_float('instance_noise', 0.5,
                               "Standard deviation (amplitude) of instance noise")
 
+    tf.app.flags.DEFINE_float('lambd', 10,
+                              "Gradient penalty lambda hyper-parameter")
+
     tf.app.flags.DEFINE_float('learning_rate_start', 0.000100,
                               "Starting learning rate used for AdamOptimizer")
 
