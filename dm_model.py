@@ -194,23 +194,30 @@ def create_model(sess, source_images, target_images=None, annealing=None, verbos
 
         if imp_wgan:
             # fake_data = Generator(BATCH_SIZE)
-            real_data = tf.placeholder(tf.float32, shape=[FLAGS.batch_size, OUTPUT_DIM])
-            fake_data_gen = _generator_model(sess, source_images)
-            fake_data = gene.get_output()
+            real_data_gen_raw = _generator_model(sess, target_images)
+            real_data_gen = real_data_gen_raw.get_output()
 
-            gen_loss = -tf.reduce_mean(disc_fake)
-            disc_loss = tf.reduce_mean(disc_fake) - tf.reduce_mean(disc_real)
+            fake_data_gen = gene_out
+
+            disc_real     = _discriminator_model(sess, target_images + noise)
+            disc_real_out = disc_real.get_output()
+
+            disc_fake     = _discriminator_model(sess, gene_out + noise)
+            disc_fake_out = disc_fake.get_output()
+
+            gen_loss = -tf.reduce_mean(disc_fake_out)
+            disc_loss = tf.reduce_mean(disc_fake_out) - tf.reduce_mean(disc_real_out)
+
             alpha = tf.random_uniform(
                 shape=[FLAGS.batch_size,1], 
                 minval=0.,
                 maxval=1.
             )
-            differences = fake_data - real_data
-            interpolates = real_data + (alpha*differences)
-            gradients = tf.gradients(Discriminator(interpolates), [interpolates])[0]
 
+            differences = fake_data_gen - real_data_gen
+            interpolates = real_data_gen + (alpha*differences)
 
-            gradients = tf.gradients(_discriminator_model(sess, target_images + noise), [interpolates])[0]
+            gradients = tf.gradients(_discriminator_model(sess, interpolates), [interpolates])[0]
             slopes = tf.sqrt(tf.reduce_sum(tf.square(gradients), reduction_indices=[1]))
             gradient_penalty = tf.reduce_mean((slopes-1.)**2)
             disc_loss += FLAGS.lambd*gradient_penalty
