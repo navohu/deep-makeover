@@ -193,6 +193,13 @@ def create_model(sess, source_images, target_images=None, annealing=None, verbos
             disc_minimize     = tf.group(disc_minimize, disc_clip_weights)
 
         if imp_wgan:
+            # Instance noise used to aid convergence.
+            # See http://www.inference.vc/instance-noise-a-trick-for-stabilising-gan-training/
+            noise_shape = [FLAGS.batch_size, rows, cols, depth]
+            noise = tf.truncated_normal(noise_shape, mean=0.0, stddev=FLAGS.instance_noise*annealing, name='instance_noise')
+            noise = tf.reshape(noise, noise_shape) # TBD: Why is this even necessary? I don't get it.
+            noise = 0.0
+
             # fake_data = Generator(BATCH_SIZE)
             real_data_gen_raw = _generator_model(sess, target_images)
             real_data_gen = real_data_gen_raw.get_output()

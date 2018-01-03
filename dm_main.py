@@ -60,7 +60,7 @@ def _prepare_train_dirs():
 
 
 # TBD: Move to dm_train.py?
-def _get_train_data():
+def _get_train_data(random_test_sample = True):
     # Setup global tensorflow state
     sess = _setup_tensorflow()
 
@@ -91,8 +91,13 @@ def _get_train_data():
 
     # Setup async input queues
     selected      = dm_celeba.select_samples(source_filter)
+
     source_images = dm_input.input_data(sess, 'train', selected)
-    test_images   = dm_input.input_data(sess, 'test', selected)
+    if random_test_sample:
+        test_images   = dm_input.input_data(sess, 'test', selected)
+    else:
+        test_selected = dm_celeba.select_samples(source_filter, random_sample=False)
+        test_images   = dm_input.input_data(sess, 'test', test_selected)
     print('%8d source images selected' % (len(selected),))
 
     selected      = dm_celeba.select_samples(target_filter)
@@ -158,7 +163,7 @@ def _get_inference_data():
 
 def main(argv=None):
     if FLAGS.run == 'train':
-        train_data = _get_train_data()
+        train_data = _get_train_data(random_test_sample=False)
         dm_train.train_model(train_data)
     elif FLAGS.run == 'inference':
         infer_data = _get_inference_data()

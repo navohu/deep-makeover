@@ -60,7 +60,7 @@ def _filter_attributes(attr_names, attr_values, sel):
     return filenames
 
 
-def select_samples(selection={}):
+def select_samples(selection={}, random_sample = True):
     """Selects those images in the Celeb-A dataset whose
     attributes match the constraints given in 'sel'"""
 
@@ -70,7 +70,9 @@ def select_samples(selection={}):
     filenames = _filter_attributes(names, attributes, selection)
 
     filenames = sorted(filenames)
-    random.shuffle(filenames)
+
+    if random_sample:
+        random.shuffle(filenames)
 
     filenames = [os.path.join(FLAGS.dataset, file) for file in filenames]
 
