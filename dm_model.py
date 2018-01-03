@@ -143,23 +143,23 @@ def create_model(sess, source_images, target_images=None, annealing=None, verbos
         print()
 
     if target_images is not None:
+        learning_rate = tf.maximum(FLAGS.learning_rate_start * annealing, FLAGS.learning_rate_end, name='learning_rate')
+
+        # Instance noise used to aid convergence.
+        # See http://www.inference.vc/instance-noise-a-trick-for-stabilising-gan-training/
+        noise_shape = [FLAGS.batch_size, rows, cols, depth]
+        noise = tf.truncated_normal(noise_shape, mean=0.0, stddev=FLAGS.instance_noise*annealing, name='instance_noise')
+        noise = tf.reshape(noise, noise_shape) # TBD: Why is this even necessary? I don't get it.
+        noise = 0.0
+        
+        #
+        # Discriminator: one takes real inputs, another takes fake (generated) inputs
+        #
+        disc_real     = _discriminator_model(sess, target_images + noise)
+        disc_real_out = disc_real.get_output()
+        disc_var_list = disc_real.get_all_variables()
+
         if not imp_wgan:
-            learning_rate = tf.maximum(FLAGS.learning_rate_start * annealing, FLAGS.learning_rate_end, name='learning_rate')
-
-            # Instance noise used to aid convergence.
-            # See http://www.inference.vc/instance-noise-a-trick-for-stabilising-gan-training/
-            noise_shape = [FLAGS.batch_size, rows, cols, depth]
-            noise = tf.truncated_normal(noise_shape, mean=0.0, stddev=FLAGS.instance_noise*annealing, name='instance_noise')
-            noise = tf.reshape(noise, noise_shape) # TBD: Why is this even necessary? I don't get it.
-            noise = 0.0
-
-            #
-            # Discriminator: one takes real inputs, another takes fake (generated) inputs
-            #
-            disc_real     = _discriminator_model(sess, target_images + noise)
-            disc_real_out = disc_real.get_output()
-            disc_var_list = disc_real.get_all_variables()
-
             disc_fake     = _discriminator_model(sess, gene_out + noise)
             disc_fake_out = disc_fake.get_output()
         
@@ -193,38 +193,30 @@ def create_model(sess, source_images, target_images=None, annealing=None, verbos
             disc_minimize     = tf.group(disc_minimize, disc_clip_weights)
 
         if imp_wgan:
-            # Instance noise used to aid convergence.
-            # See http://www.inference.vc/instance-noise-a-trick-for-stabilising-gan-training/
-            noise_shape = [FLAGS.batch_size, rows, cols, depth]
-            noise = tf.truncated_normal(noise_shape, mean=0.0, stddev=FLAGS.instance_noise*annealing, name='instance_noise')
-            noise = tf.reshape(noise, noise_shape) # TBD: Why is this even necessary? I don't get it.
-            noise = 0.0
-
             # fake_data = Generator(BATCH_SIZE)
-            real_data_gen_raw = _generator_model(sess, target_images)
-            real_data_gen = real_data_gen_raw.get_output()
-
+            # real_data_gen_raw = _generator_model(sess, target_images)
+            # real_data_gen = real_data_gen_raw.get_output()
+            real_data_gen = target_images
             fake_data_gen = gene_out
-
-            disc_real     = _discriminator_model(sess, target_images + noise)
-            disc_real_out = disc_real.get_output()
 
             disc_fake     = _discriminator_model(sess, gene_out + noise)
             disc_fake_out = disc_fake.get_output()
 
-            gen_loss = -tf.reduce_mean(disc_fake_out)
+            gene_loss = -tf.reduce_mean(disc_fake_out)
             disc_loss = tf.reduce_mean(disc_fake_out) - tf.reduce_mean(disc_real_out)
 
             alpha = tf.random_uniform(
-                shape=[FLAGS.batch_size,1], 
+                shape=[FLAGS.batch_size, 100, 80, 3], 
                 minval=0.,
                 maxval=1.
             )
-
             differences = fake_data_gen - real_data_gen
             interpolates = real_data_gen + (alpha*differences)
 
-            gradients = tf.gradients(_discriminator_model(sess, interpolates), [interpolates])[0]
+            print("Disc model type: " + str(type(_discriminator_model(sess, interpolates).get_output())))
+            print("Interpolate type: " + str(type(interpolates)))
+
+            gradients = tf.gradients(_discriminator_model(sess, interpolates).get_output(), [interpolates])[0]
             slopes = tf.sqrt(tf.reduce_sum(tf.square(gradients), reduction_indices=[1]))
             gradient_penalty = tf.reduce_mean((slopes-1.)**2)
             disc_loss += FLAGS.lambd*gradient_penalty
