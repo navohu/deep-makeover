@@ -11,7 +11,7 @@ def define_flags():
     tf.app.flags.DEFINE_string('attribute_file', 'list_attr_celeba.txt',
                                "Celeb-A dataset attribute file")
 
-    tf.app.flags.DEFINE_integer('batch_size', 8,
+    tf.app.flags.DEFINE_integer('batch_size', 16,
                                 "Number of samples per batch.")
 
     tf.app.flags.DEFINE_string('checkpoint_dir', 'checkpoint',
