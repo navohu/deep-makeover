@@ -1,3 +1,5 @@
 dataset/
 dataset_extra/
 *.pyc
+train/
+logs/

@@ -5,7 +5,7 @@ FLAGS = tf.app.flags.FLAGS
 
 def define_flags():
     # Configuration (alphabetically)
-    tf.app.flags.DEFINE_integer('annealing_half_life', 300,
+    tf.app.flags.DEFINE_integer('annealing_half_life', 1000,
                                 "Number of batches until annealing temperature is halved")
 
     tf.app.flags.DEFINE_string('attribute_file', 'list_attr_celeba.txt',
@@ -77,5 +77,5 @@ def define_flags():
     tf.app.flags.DEFINE_string('train_mode', 'mtf',
                                "Training mode. Can be male-to-female (`mtf`), female-to-male (`ftm`), male-to-male (`mtm`) or female-to-female (`ftf`)")
 
-    tf.app.flags.DEFINE_integer('train_time', 180,
+    tf.app.flags.DEFINE_integer('train_time', 120,
                                 "Time in minutes to train the model")
