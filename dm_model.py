@@ -234,7 +234,8 @@ def create_model(sess, source_images, target_images=None, annealing=None, verbos
             gene_minimize = gen_train_op.minimize(gene_loss, var_list=gene_var_list, name='gene_loss_minimize')    
             disc_minimize = disc_train_op.minimize(disc_loss, var_list=disc_var_list, name='disc_loss_minimize')
 
-            disc_clip_weights = None
+            disc_clip_weights = _clip_weights(disc_var_list, FLAGS.disc_weights_threshold)
+            disc_minimize     = tf.group(disc_minimize, disc_clip_weights)
 
     # Package everything into an dumb object
     model = dm_utils.Container(locals())
