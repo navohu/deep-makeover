@@ -77,5 +77,5 @@ def define_flags():
     tf.app.flags.DEFINE_string('train_mode', 'mtf',
                                "Training mode. Can be male-to-female (`mtf`), female-to-male (`ftm`), male-to-male (`mtm`) or female-to-female (`ftf`)")
 
-    tf.app.flags.DEFINE_integer('train_time', 120,
+    tf.app.flags.DEFINE_integer('train_time', 480,
                                 "Time in minutes to train the model")
