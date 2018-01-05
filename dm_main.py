@@ -72,20 +72,20 @@ def _get_train_data(random_test_sample = True):
     if FLAGS.train_mode == 'ftm' or FLAGS.train_mode == 'f2m':
         # Trans filter: from female to attractive male
         # Note: removed facial hair from target images because otherwise the network becomes overly focused on rendering facial hair
-        source_filter = {'Male':False, 'Blurry':False, 'Eyeglasses':False, 'Attractive':True}
+        source_filter = {'Male':False, 'Blurry':False, 'Eyeglasses':False, 'Attractive':True, 'Goatee':False, 'Mustache':False, 'No_Beard':True}
         target_filter = {'Male':True,  'Blurry':False, 'Eyeglasses':False, 'Attractive':True, 'Goatee':False, 'Mustache':False, 'No_Beard':True}
     elif FLAGS.train_mode == 'mtf' or FLAGS.train_mode == 'm2f':
         # Trans filter: from male to attractuve female
-        source_filter = {'Male':True,  'Blurry':False, 'Eyeglasses':False, 'Attractive':True}
-        target_filter = {'Male':False, 'Blurry':False, 'Eyeglasses':False, 'Attractive':True}
+        source_filter = {'Male':True,  'Blurry':False, 'Eyeglasses':False, 'Attractive':True, 'Goatee':False, 'Mustache':False, 'No_Beard':True}
+        target_filter = {'Male':False, 'Blurry':False, 'Eyeglasses':False, 'Attractive':True, 'Goatee':False, 'Mustache':False, 'No_Beard':True}
     elif FLAGS.train_mode == 'ftf' or FLAGS.train_mode == 'f2f':
         # Vanity filter: from female to attractive female
-        source_filter = {'Male':False, 'Blurry':False, 'Eyeglasses':False, 'Attractive':True}
-        target_filter = {'Male':False, 'Blurry':False, 'Eyeglasses':False, 'Attractive':True}
+        source_filter = {'Male':False, 'Blurry':False, 'Eyeglasses':False, 'Attractive':True, 'Goatee':False, 'Mustache':False, 'No_Beard':True}
+        target_filter = {'Male':False, 'Blurry':False, 'Eyeglasses':False, 'Attractive':True, 'Goatee':False, 'Mustache':False, 'No_Beard':True}
     elif FLAGS.train_mode == "mtm" or FLAGS.train_mode == 'm2m':
         # Vanity filter: from male to attractive male
-        source_filter = {'Male':True,  'Blurry':False, 'Eyeglasses':False, 'Attractive':True}
-        target_filter = {'Male':True,  'Blurry':False, 'Eyeglasses':False, 'Attractive':True}
+        source_filter = {'Male':True,  'Blurry':False, 'Eyeglasses':False, 'Attractive':True, 'Goatee':False, 'Mustache':False, 'No_Beard':True}
+        target_filter = {'Male':True,  'Blurry':False, 'Eyeglasses':False, 'Attractive':True, 'Goatee':False, 'Mustache':False, 'No_Beard':True}
     else:
         raise ValueError('`train_mode` must be one of: `ftm`, `mtf`, `ftf` or `mtm`')
 
