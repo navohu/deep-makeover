@@ -104,10 +104,12 @@ def _discriminator_loss(disc_real_output, disc_fake_output):
     # I.e. did we correctly identify the input as real or not?
     disc_real_loss = -disc_real_output
     disc_fake_loss =  disc_fake_output
+    print disc_real_loss
+    print disc_fake_loss
 
     disc_real_loss = tf.reduce_mean(disc_real_loss, name='disc_real_loss')
     disc_fake_loss = tf.reduce_mean(disc_fake_loss, name='disc_fake_loss')
-    disc_loss      = tf.add(disc_real_loss, disc_fake_loss, name='dics_loss')
+    disc_loss      = tf.add(disc_real_loss, disc_fake_loss, name='disc_loss')
 
     return disc_loss, disc_real_loss, disc_fake_loss
 
@@ -123,7 +125,7 @@ def _clip_weights(var_list, weights_threshold):
     return tf.group(*ops, name='clip_weights')
 
 
-def create_model(sess, source_images, target_images=None, annealing=None, verbose=False, imp_wgan=False):    
+def create_model(sess, source_images, target_images=None, annealing=None, verbose=False, gan_type="wgan"):  #default wgan unless specified  
     rows  = int(source_images.get_shape()[1])
     cols  = int(source_images.get_shape()[2])
     depth = int(source_images.get_shape()[3])
@@ -159,7 +161,7 @@ def create_model(sess, source_images, target_images=None, annealing=None, verbos
         disc_real_out = disc_real.get_output()
         disc_var_list = disc_real.get_all_variables()
 
-        if not imp_wgan:
+        if gan_type=="wgan":
             disc_fake     = _discriminator_model(sess, gene_out + noise)
             disc_fake_out = disc_fake.get_output()
         
@@ -192,7 +194,7 @@ def create_model(sess, source_images, target_images=None, annealing=None, verbos
             disc_clip_weights = _clip_weights(disc_var_list, FLAGS.disc_weights_threshold)
             disc_minimize     = tf.group(disc_minimize, disc_clip_weights)
 
-        if imp_wgan:
+        if gan_type=="imp_wgan":
             # fake_data = Generator(BATCH_SIZE)
             # real_data_gen_raw = _generator_model(sess, target_images)
             # real_data_gen = real_data_gen_raw.get_output()
@@ -234,6 +236,43 @@ def create_model(sess, source_images, target_images=None, annealing=None, verbos
             gene_minimize = gen_train_op.minimize(gene_loss, var_list=gene_var_list, name='gene_loss_minimize')    
             disc_minimize = disc_train_op.minimize(disc_loss, var_list=disc_var_list, name='disc_loss_minimize')
 
+            disc_clip_weights = _clip_weights(disc_var_list, FLAGS.disc_weights_threshold)
+            disc_minimize     = tf.group(disc_minimize, disc_clip_weights)
+
+        if gan_type=="imp_dcgan": #mixed with wgan for now just to test one sided label smoothing
+            disc_fake     = _discriminator_model(sess, gene_out + noise)
+            disc_fake_out = disc_fake.get_output()
+
+            #one sided label smoothing
+            tf.add(disc_real_out, tf.random_uniform(disc_real_out.shape,-0.3,0.3))
+            tf.add(disc_fake_out, tf.random_uniform(disc_fake_out.shape,0,0.3))
+        
+            if verbose:
+                print("Discriminator input (feature) size is %d x %d x %d = %d" %
+                      (rows, cols, depth, rows*cols*depth))
+
+                print("Discriminator has %4.2fM parameters" % (disc_real.get_num_parameters()/1e6,))
+                print()
+
+            #
+            # Losses and optimizers
+            #
+            gene_loss = _generator_loss(source_images, gene_out, disc_fake_out, annealing)
+            
+            disc_loss, disc_real_loss, disc_fake_loss = _discriminator_loss(disc_real_out, disc_fake_out)
+
+            gene_opti = tf.train.AdamOptimizer(learning_rate=learning_rate,
+                                               name='gene_optimizer')
+
+            # Note WGAN doesn't work well with Adam or any other optimizer that relies on momentum
+            disc_opti = tf.train.RMSPropOptimizer(learning_rate=learning_rate, momentum=0.0,
+                                                  name='disc_optimizer')
+
+            gene_minimize = gene_opti.minimize(gene_loss, var_list=gene_var_list, name='gene_loss_minimize')    
+            disc_minimize = disc_opti.minimize(disc_loss, var_list=disc_var_list, name='disc_loss_minimize')
+
+            # Weight clipping a la WGAN (arXiv 1701.07875)
+            # TBD: We shouldn't be clipping all variables (incl biases), just the weights
             disc_clip_weights = _clip_weights(disc_var_list, FLAGS.disc_weights_threshold)
             disc_minimize     = tf.group(disc_minimize, disc_clip_weights)
 

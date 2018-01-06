@@ -21,6 +21,7 @@ import dm_train
 import dm_utils
 
 FLAGS = tf.app.flags.FLAGS
+specifiedgan = "imp_dcgan"
 
 
 def _setup_tensorflow():
@@ -109,11 +110,13 @@ def _get_train_data(random_test_sample = True):
     annealing = tf.Variable(initial_value=1.0, trainable=False, name='annealing')
     halve_annealing = tf.assign(annealing, 0.5*annealing)
 
+    print('Using gan type: %s', specifiedgan)
+
     # Create and initialize training and testing models
-    train_model  = dm_model.create_model(sess, source_images, target_images, annealing, verbose=True, imp_wgan=False)
+    train_model  = dm_model.create_model(sess, source_images, target_images, annealing, verbose=True, gan_type=specifiedgan)
 
     print("Building testing model...")
-    test_model   = dm_model.create_model(sess, test_images, None, annealing, imp_wgan=False)
+    test_model   = dm_model.create_model(sess, test_images, None, annealing, gan_type=specifiedgan)
     print("Done.")
     
     # Forget this line and TF will deadlock at the beginning of training
