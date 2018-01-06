@@ -245,7 +245,7 @@ def create_model(sess, source_images, target_images=None, annealing=None, verbos
 
             #one sided label smoothing
             tf.add(disc_real_out, tf.random_uniform(disc_real_out.shape,-0.3,0.3))
-            tf.add(disc_fake_out, tf.random_uniform(disc_fake_out.shape,0,0.3))
+            #tf.add(disc_fake_out, tf.random_uniform(disc_fake_out.shape,0,0.3))
         
             if verbose:
                 print("Discriminator input (feature) size is %d x %d x %d = %d" %
